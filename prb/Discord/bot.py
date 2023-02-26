@@ -1,5 +1,3 @@
-import asyncio
-
 import discord
 from discord.ext import commands
 from prb.Crawler.crawler import Crawler
@@ -42,10 +40,19 @@ class DiscordBot(commands.Bot):
 
                     return
 
-                winners, losers = self.crawler.process(url=url)
+                winners, losers, perco = self.crawler.process(url=url, mode=mode)
+
+                if len(winners + losers) == 0:
+                    error = discord.Embed(
+                        title="⚠️ Erreur ⚠️", color=0xFF0000)
+                    error.add_field(
+                        name="Screen incorrect!", value="", inline=True)
+                    await message.reply(embed=error)
+
+                    return
 
                 result = discord.Embed(
-                    title="⚔️ {} Perco".format(mode),
+                    title="⚔️ {} de {}".format(mode, perco),
                     description="❗ Victoire **{}**vs**{}** ❗".format(len(winners), len(losers)), color=0x00ff00)
                 result.add_field(
                     name="🎖️ Gagnants", value="".join([f"- {k}\n" for k in winners]), inline=True)

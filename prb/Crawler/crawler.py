@@ -9,7 +9,7 @@ class Crawler:
     def __init__(self):
         self.reader = easyocr.Reader(["fr"])
 
-    def process(self, url):
+    def process(self, url, mode):
         response = requests.get(url)
         img_original = response.content
         img_as_np = np.frombuffer(img_original, dtype=np.uint8)
@@ -40,12 +40,22 @@ class Crawler:
         results = [res[0] for res in _results]
 
         # filter perco or prisme
-        participants = filter(lambda res: "Do" not in res and len(res) <= 20 and "Prisme" not in res, results)
-        participants = np.array(list(participants))
+        participants = filter(lambda res: "'" not in res and "Do" not in res and "Prisme " not in res, results)
+        perco = [res for res in results if res not in participants][0]
+        participants = np.array(list(results))
 
-        winners = participants[int(np.where(participants == "Gagnants")[
-                                       0]) + 1:int(np.where(participants == "Perdants")[0])]
-        losers = participants[int(np.where(participants == "Perdants")[
-                                      0]) + 1:len(participants)]
+        winners = list(participants[int(np.where(participants == "Gagnants")[
+                                       0]) + 1:int(np.where(participants == "Perdants")[0])])
+        losers = list(participants[int(np.where(participants == "Perdants")[
+                                      0]) + 1:len(participants)])
 
-        return winners, losers
+        if mode == "Attaque":
+            if perco not in losers:
+                return [], []
+            losers.remove(perco)
+        else:
+            if perco not in winners:
+                return [], []
+            winners.remove(perco)
+
+        return winners, losers, perco
